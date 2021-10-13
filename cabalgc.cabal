@@ -17,7 +17,7 @@ maintainer:         trebla@vex.net
 -- A copyright notice.
 -- copyright:
 category:           Development
-extra-source-files: CHANGELOG.md
+extra-source-files: CHANGELOG.md, README.md
 
 executable cabalgc
     main-is:          cabalgc.hs
