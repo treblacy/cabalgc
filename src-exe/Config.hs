@@ -3,8 +3,12 @@
 -- | Configuration parameters I need.
 module Config where
 
+import Data.Functor.Identity
 import System.Directory
+import System.FilePath
 import System.Process
+
+import qualified Cabal.Config as CC
 
 -- | Record of program names and directory names I need.
 data Config = Config{
@@ -34,8 +38,9 @@ config mver = do
 -- path.
 configVersioned ver = do
     home <- getHomeDirectory
+    storeDir <- (runIdentity . CC.cfgStoreDir) <$> CC.readConfig
     let ghcpkg = "ghc-pkg-" ++ ver
-        cabalstore = home ++ "/.cabal/store/ghc-" ++ ver 
-        cabaldb = cabalstore ++ "/package.db"
+        cabalstore = storeDir </> ("ghc-" ++ ver)
+        cabaldb = cabalstore </> "package.db"
     return Config{..}
 
