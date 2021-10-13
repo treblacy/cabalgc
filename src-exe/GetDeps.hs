@@ -6,6 +6,7 @@ module GetDeps(getDepGraph) where
 -- I don't export the intermediate procedures---very gory implementation
 -- details.
 
+import Data.Maybe
 import System.Process
 import Text.Parsec
 import Text.Parsec.Char
@@ -64,7 +65,7 @@ pkgNode = do
   where
     extract dict = do
         i:_ <- words <$> lookup "id" dict
-        d <- words <$> lookup "depends" dict
+        let d = maybe [] words $ lookup "depends" dict
         pure (i, d)
 
 pkgGraph :: Parser [(String, [String])]
