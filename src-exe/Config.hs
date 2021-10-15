@@ -3,13 +3,15 @@
 -- | Configuration parameters I need.
 module Config where
 
-import System.Directory
-import System.Process
+import qualified Cabal.Config as Cabal -- It has its Config, I have my Config.
+import           Data.Functor.Identity
+import           System.FilePath ((</>))
+import           System.Process
 
 -- | Record of program names and directory names I need.
 data Config = Config{
-    ghcpkg :: String,       -- ^ ghc-pkg
-    cabalstore :: String,   -- ^ cabal store directory
+    ghcpkg :: String,       -- ^ versioned ghc-pkg
+    cabalstore :: String,   -- ^ cabal store directory including GHC version
     cabaldb :: String       -- ^ cabal store package.db
     }
     deriving Show
@@ -33,9 +35,9 @@ config mver = do
 -- IO for obtaining the user's home directory so as to construct the cabal store
 -- path.
 configVersioned ver = do
-    home <- getHomeDirectory
+    Cabal.Config{cfgStoreDir = Identity s} <- Cabal.readConfig
     let ghcpkg = "ghc-pkg-" ++ ver
-        cabalstore = home ++ "/.cabal/store/ghc-" ++ ver 
-        cabaldb = cabalstore ++ "/package.db"
+        cabalstore = s </> "ghc-" ++ ver
+        cabaldb = cabalstore </> "package.db"
     return Config{..}
 

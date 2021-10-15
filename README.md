@@ -2,9 +2,6 @@
 
 This program can list library package IDs in the cabal store and remove some of them.
 
-The current version makes a Linux assumption: the cabal store is at
-$HOME/.cabal/store.
-
 Here is the --help message:
 
 ```
