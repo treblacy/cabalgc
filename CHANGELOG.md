@@ -1,5 +1,9 @@
 # Revision history for cabalgc
 
+## 1.0.1.1 -- 2021-10-15
+
+* Add: Very general determining of cabal store directory.
+
 ## 1.0.1.0 -- 2021-10-14
 
 * Add: Can list dependencies, reverse dependencies, packages not depended on.
