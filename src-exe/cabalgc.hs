@@ -18,6 +18,23 @@ main = do
     graph <- getDepGraph cfg
     case command of
       List -> putStr ((unlines . sortOn (map toLower) . map fst) graph)
+      ListTops -> putStr ((unlines . sortOn (map toLower)) indeps)
+        where
+          indeps = (map fst . filter (null . snd) . graphRev) graph
+      ListDeps -> putStr (showGraph "->" sorted)
+        where
+          sorted = (map (\(p,ps) -> (p, sortOn (map toLower) ps)) .
+                    sortOn (map toLower . fst) .
+                    graphTrim
+                   )
+                   graph
+      ListRevDeps -> putStr (showGraph "<-" sorted)
+        where
+          sorted = (map (\(p,ps) -> (p, sortOn (map toLower) ps)) .
+                    sortOn (map toLower . fst) .
+                    graphRev
+                   )
+                   graph
       GC -> case removalOrder graph keeps of
         NotFound ps -> do
             hPutStrLn stderr (unlines
@@ -39,3 +56,12 @@ remove Config{..} Doit p = do
             "unregister",
             p]
 
+showGraph arrow g = concatMap showNode g
+  where
+    -- showNode (p, []) = p ++ " " ++ arrow ++ " ;\n"
+    showNode (p, ps) = p ++ " " ++ arrow ++ "\n" ++
+                       concatMap (\x -> indent ++ x ++ "\n") ps ++
+                       indent ++ ";\n"
+    indent = "    "
+
+gg = [("hi", ["abc", "def"]), ("def", []), ("abc", ["hello"])]

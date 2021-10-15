@@ -16,7 +16,7 @@ data Params = Params{
     }
     deriving Show
 
-data Command = GC | List
+data Command = GC | List | ListDeps | ListTops | ListRevDeps
     deriving Show
 
 data Commitment = Dryrun | Doit
@@ -35,6 +35,15 @@ options =
     , Option "l" ["list"]
       (NoArg (\o -> pure o{command = List}))
       "just list packages, remove nothing"
+    , Option "d" ["deps"]
+      (NoArg (\o -> pure o{command = ListDeps}))
+      "just list dependencies, remove nothing"
+    , Option "r" ["rdeps"]
+      (NoArg (\o -> pure o{command = ListRevDeps}))
+      "just list reverse dependencies, remove nothing"
+    , Option "t" ["tops"]
+      (NoArg (\o -> pure o{command = ListTops}))
+      "just list packages not depended on, remove nothing"
     , Option "y" ["yes"]
       (NoArg (\o -> pure o{commitment = Doit}))
       "perform the removals (default is dry-run)"
@@ -50,7 +59,7 @@ getParams = do
     case getOpt RequireOrder options args of
       (fs, ks, []) -> foldM (flip ($)) blankParams{keeps=ks} fs
       (_, _, es) -> do
-          hPutStr stderr (unlines es)
+          hPutStr stderr (concat es)
           hPutStrLn stderr "Please use --help or -h for usage."
           exitWith (ExitFailure 1)
 

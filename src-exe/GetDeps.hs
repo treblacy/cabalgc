@@ -1,18 +1,17 @@
 {-# language RecordWildCards #-} -- Rationalization: Small module, few field names. :)
 
 -- | Read and construct the dependency graph of the cabal store.
-module GetDeps(getDepGraph) where
+module GetDeps(getDepGraph, graphRev, graphTrim) where
 
--- I don't export the intermediate procedures---very gory implementation
--- details.
+import           Control.Monad
+import           Data.List
+import qualified Data.Map.Strict as Map
+import           System.Process
+import           Text.Parsec
+import           Text.Parsec.Char
+import           Text.Parsec.String
 
-import Control.Monad
-import System.Process
-import Text.Parsec
-import Text.Parsec.Char
-import Text.Parsec.String
-
-import Config
+import           Config
 
 -- | Get the dependency graph of the cabal store.
 --
@@ -26,6 +25,27 @@ getDepGraph Config{..} = do
       Right g -> pure g
   where
     args = ["--package-db=" ++ cabaldb, "--expand-pkgroot", "dump"]
+
+-- | The graph obtained from 'getDepGraph' includes references to what comes
+-- with GHC too. This function gets rid of them. Mathematically, in each
+-- (x, [y,z,p]), if p is not in the graph, get rid of it.
+graphTrim :: Eq a => [(a, [a])] -> [(a, [a])]
+graphTrim g = map (\(p,ps) -> (p, filter (`elem` vertices) ps)) g
+  where
+    vertices = map fst g
+
+-- | Reverse/Transpose the graph.
+--
+-- If the original graph has (x, [y,z,p]) where p is not in the graph, p will be
+-- dropped.
+graphRev :: Ord a => [(a, [a])] -> [(a, [a])]
+graphRev g = Map.toList dict_final
+  where
+    dict_0 = Map.fromList (map (\(p, _) -> (p, [])) g)
+    dict_final = foldl' outer dict_0 g
+    outer dict (u, vs) = foldl' inner dict vs
+      where
+        inner dict v = Map.adjust (u :) v dict
 
 -- Going out of my way to parse "ghc-pkg dump" output. :)
 

@@ -1,5 +1,11 @@
 # Revision history for cabalgc
 
+## 1.0.1.0 -- 2021-10-14
+
+* Add: Can list dependencies, reverse dependencies, packages not depended on.
+* Fix: Now fewer blank lines when reporting unrecognized options.
+* Fix: cabalgc.cabal has homepage field (points to github webpage).
+
 ## 1.0.0.1 -- 2021-10-13
 
 * Fix: Now works if some packages don't have the "depends" field.
