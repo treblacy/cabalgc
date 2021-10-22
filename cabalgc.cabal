@@ -1,6 +1,6 @@
 cabal-version:      2.4
 name:               cabalgc
-version:            1.0.1.1
+version:            1.0.1.2
 synopsis:           Selectively remove library packages in cabal store.
 
 -- A longer description of the package.
@@ -22,7 +22,7 @@ extra-source-files: CHANGELOG.md, README.md
 executable cabalgc
     main-is:          cabalgc.hs
     other-modules:    Config, GC, GetDeps, CLI
-    build-depends:    base ^>= 4.14,
+    build-depends:    base >= 4.14 && < 4.16,
                       containers ^>= 0.6.2,
                       directory ^>= 1.3.6,
                       filepath ^>= 1.4,

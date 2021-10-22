@@ -1,5 +1,9 @@
 # Revision history for cabalgc
 
+## 1.0.1.2 -- 2021-10-22
+
+* Relax dependency bound (of base) for building with GHC 9.0.
+
 ## 1.0.1.1 -- 2021-10-15
 
 * Add: Very general determining of cabal store directory.
