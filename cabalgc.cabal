@@ -22,12 +22,12 @@ extra-source-files: CHANGELOG.md, README.md
 executable cabalgc
     main-is:          cabalgc.hs
     other-modules:    Config, GC, GetDeps, CLI
-    build-depends:    base >= 4.14 && < 4.16,
+    build-depends:    base >= 4.14 && < 4.18,
                       containers ^>= 0.6.2,
                       directory ^>= 1.3.6,
                       filepath ^>= 1.4,
                       parsec ^>= 3.1.14,
                       process ^>= 1.6.8,
-                      cabal-install-parsers ^>= 0.4.3
+                      cabal-install-parsers >= 0.4.3 && < 0.6
     hs-source-dirs:   src-exe
     default-language: Haskell2010

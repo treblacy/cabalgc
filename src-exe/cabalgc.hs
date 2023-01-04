@@ -63,5 +63,3 @@ showGraph arrow g = concatMap showNode g
                        concatMap (\x -> indent ++ x ++ "\n") ps ++
                        indent ++ ";\n"
     indent = "    "
-
-gg = [("hi", ["abc", "def"]), ("def", []), ("abc", ["hello"])]
