@@ -1,5 +1,10 @@
 # Revision history for cabalgc
 
+## 1.0.1.3 -- 2023-01-04
+
+* Relax dependencies for GHC 9.2 and 9.4 and current hackage.
+* Oh and remove a leftover spurrious line of code :)
+
 ## 1.0.1.2 -- 2021-10-22
 
 * Relax dependency bound (of base) for building with GHC 9.0.
