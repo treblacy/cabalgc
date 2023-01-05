@@ -10,19 +10,19 @@ import System.IO
 
 data Params = Params{
     ghcver :: Maybe String,        -- ^ optional GHC numeric version
-    keeps :: [String],             -- ^ which packages the user wants to keep
+    pkgIDs :: [String],            -- ^ packages specified by the user
     commitment :: Commitment,      -- ^ dry-run or do-it
     command :: Command             -- ^ chosen operation
     }
     deriving Show
 
-data Command = GC | List | ListDeps | ListTops | ListRevDeps
+data Command = GC | RM | List | ListDeps | ListTops | ListRevDeps
     deriving Show
 
 data Commitment = Dryrun | Doit
     deriving Show
 
-blankParams = Params{ghcver = Nothing, keeps = [], commitment = Dryrun, command = GC}
+blankParams = Params{ghcver = Nothing, pkgIDs = [], commitment = Dryrun, command = GC}
 
 options :: [OptDescr (Params -> IO Params)]
 options =
@@ -44,6 +44,9 @@ options =
     , Option "t" ["tops"]
       (NoArg (\o -> pure o{command = ListTops}))
       "just list packages not depended on, remove nothing"
+    , Option "x" ["remove"]
+      (NoArg (\o -> pure o{command = RM}))
+      "remove only specified packages (dry-run default applies)"
     , Option "y" ["yes"]
       (NoArg (\o -> pure o{commitment = Doit}))
       "perform the removals (default is dry-run)"
@@ -57,7 +60,7 @@ getParams :: IO Params
 getParams = do
     args <- getArgs
     case getOpt RequireOrder options args of
-      (fs, ks, []) -> foldM (flip ($)) blankParams{keeps=ks} fs
+      (fs, ks, []) -> foldM (flip ($)) blankParams{pkgIDs=ks} fs
       (_, _, es) -> do
           hPutStr stderr (concat es)
           hPutStrLn stderr "Please use --help or -h for usage."

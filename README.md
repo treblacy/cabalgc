@@ -2,7 +2,7 @@
 
 This program can list library package IDs in the cabal store and remove some of them.
 
-Here is the --help message:
+Here is the help message:
 
 ```
 Usage: cabalgc [OPTION...] PKGID...
@@ -14,6 +14,7 @@ BUT: Dry-run unless you say -y or --yes .
   -d          --deps         just list dependencies, remove nothing
   -r          --rdeps        just list reverse dependencies, remove nothing
   -t          --tops         just list packages not depended on, remove nothing
+  -x          --remove       remove only specified packages (dry-run default applies)
   -y          --yes          perform the removals (default is dry-run)
 ```
 
@@ -126,13 +127,72 @@ The output format is similar to `--deps` but with “`<-`” instead.
 
 ## Removing
 
-Removing works like garbage collection: You say what you want to keep.
+### Removing named packages only
+
+The `--remove` option is for removing only the packages you name.  This program
+will compute a safe removal order.  There is a safety check: A named package is
+kept if it is needed by an unremoved package.  (And of course a package ID that
+doesn't exist cannot be removed either.)  A dry-run is done, i.e., just reports
+what would be removed; for actual removal, add `-y` or `--yes`.
+
+Dry-run example:
+
+```
+$ cabalgc --remove \
+>   scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9 \
+>   attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18 \
+>   primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632 \
+>   foobar-1.1-deadbeef
+```
+
+Output on stdout: What would be removed:
+
+```
+Would remove attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18
+Would remove scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9
+```
+
+Warnings on stderr: The Unremoved and the non-existent:
+
+```
+Warning: primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632 not removed: needed by other packages.
+Warning: foobar-1.1-deadbeef not removed: did not exist.
+```
+
+Removal example:
+
+```
+$ cabalgc --remove --yes \
+>   scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9 \
+>   attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18 \
+>   primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632 \
+>   foobar-1.1-deadbeef
+```
+
+Output on stdout:
+
+```
+Removing attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18
+Removing scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9
+```
+
+Warnings on stderr:
+
+```
+Warning: primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632 not removed: needed by other packages.
+Warning: foobar-1.1-deadbeef not removed: did not exist.
+```
+
+
+### Removing unamed packages (garbage collection)
+
+The default mode works like garbage collection: You say what you want to keep.
 (Hopefully, the various listing options above help you explore and decide.)
 Then this program also figures out transitive dependencies to keep, and removes
 the rest.
 
-This program dry-runs by default, i.e., just reports what would be removed, without actual
-removal. For actual removal, add the -y or --yes option.
+This program dry-runs by default, i.e., just reports what would be removed; for
+actual removal, add `-y` or `--yes`.
 
 Example: I have two builds of attoparsec-0.14.1 (and most of its transitive
 dependencies) because one was built upon hashable-1.3.3.0 and the other was

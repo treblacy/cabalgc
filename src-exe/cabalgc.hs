@@ -35,7 +35,7 @@ main = do
                     graphRev
                    )
                    graph
-      GC -> case removalOrder graph keeps of
+      GC -> case removalOrder graph pkgIDs of
         NotFound ps -> do
             hPutStrLn stderr (unlines
               ("Error: These are not in the cabal store, \
@@ -43,6 +43,26 @@ main = do
                \please check for typoes:" : ps))
             exitWith (ExitFailure 1)
         Remove ps -> mapM_ (remove cfg commitment) ps
+      RM ->
+        -- Not the perfect algorithm but it works for now. Shortcomings:
+        -- Perhaps not an efficient algorithm?
+        case removalOrder graph keeps of
+          Remove ps -> do
+              mapM_ (remove cfg commitment) ps
+              mapM_ warnKept (pkgIDs \\ ps)
+            where
+              warnKept p = hPutStrLn stderr
+                ("Warning: " ++ p ++ " not removed: " ++
+                 if p `elem` knownPkgs
+                 then "needed by other packages."
+                 else "did not exist.")
+          -- NotFound should not happen here.
+          NotFound ps ->
+            error (unlines ("Should not happen, but these are \"not found\":" : ps))
+        where
+          keeps = knownPkgs \\ pkgIDs
+          knownPkgs = map fst graph
+          -- candidateRevDeps = filter (\(p, _) -> p `elem` pkgIDs) (graphRev graph)
 
 remove _cfg Dryrun p =
     putStrLn ("Would remove " ++ p)
