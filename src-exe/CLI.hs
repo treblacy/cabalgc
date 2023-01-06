@@ -3,6 +3,8 @@ module CLI where
 
 import Control.Monad
 import Data.List
+import Data.Version (showVersion)
+import Paths_cabalgc (version)
 import System.Console.GetOpt
 import System.Environment
 import System.Exit
@@ -29,6 +31,9 @@ options =
     [ Option ['h'] ["help"]
       (NoArg (\_ -> help))
       "this help message"
+    , Option ['V'] ["version"]
+      (NoArg (\_ -> printVersion))
+      "print version number"
     , Option "g" ["ghc"]
       (ReqArg (\s o -> pure o{ghcver = Just s}) "VERSION")
       "GHC version, e.g., 8.10 or 8.10.7"
@@ -75,4 +80,8 @@ helpmsg = usageInfo header options
 
 help = do
     putStr helpmsg
+    exitSuccess
+
+printVersion = do
+    putStrLn (showVersion version)
     exitSuccess
