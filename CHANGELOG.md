@@ -1,5 +1,10 @@
 # Revision history for cabalgc
 
+## 1.0.2.0 -- 2023-01-05
+
+* Add: Option to print version number.
+* Add: Option to remove only listed packages.
+
 ## 1.0.1.3 -- 2023-01-04
 
 * Relax dependencies for GHC 9.2 and 9.4 and current hackage.
