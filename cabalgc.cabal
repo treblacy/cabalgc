@@ -1,6 +1,6 @@
 cabal-version:      2.4
 name:               cabalgc
-version:            1.0.1.3
+version:            1.0.2.0
 synopsis:           Selectively remove library packages in cabal store.
 
 -- A longer description of the package.

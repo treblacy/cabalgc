@@ -9,6 +9,7 @@ Usage: cabalgc [OPTION...] PKGID...
 Remove library packages except those you specify and transitive dependencies.
 BUT: Dry-run unless you say -y or --yes .
   -h          --help         this help message
+  -V          --version      print version number
   -g VERSION  --ghc=VERSION  GHC version, e.g., 8.10 or 8.10.7
   -l          --list         just list packages, remove nothing
   -d          --deps         just list dependencies, remove nothing
