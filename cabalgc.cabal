@@ -21,12 +21,13 @@ extra-source-files: CHANGELOG.md, README.md
 
 executable cabalgc
     main-is:          cabalgc.hs
-    other-modules:    Paths_cabalgc, Config, GC, GetDeps, CLI
+    other-modules:    Paths_cabalgc, Config, GC, GetDeps, CLI, MonoGraph
     autogen-modules:  Paths_cabalgc
     build-depends:    base >= 4.14 && < 4.19,
                       containers ^>= 0.6.2,
                       directory ^>= 1.3.6,
                       filepath ^>= 1.4,
+                      mtl >= 2.2.2 && < 2.4,
                       parsec ^>= 3.1.14,
                       process ^>= 1.6.8,
                       cabal-install-parsers >= 0.4.3 && < 0.7

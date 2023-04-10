@@ -1,7 +1,7 @@
-{-# language RecordWildCards #-} -- Rationalization: Small module, few field names. :)
+{-# language NamedFieldPuns #-}
 
-import Data.List
 import Data.Char
+import Data.List hiding (transpose)
 import System.Directory
 import System.Exit
 import System.IO
@@ -11,31 +11,24 @@ import CLI
 import Config
 import GC
 import GetDeps
+import MonoGraph
 
 main = do
-    Params{..} <- getParams
+    Params{ghcver, pkgIDs, commitment, command} <- getParams
     cfg <- config ghcver
-    graph <- getDepGraph cfg
+    deps <- getDepGraph cfg
+    let depGraph = fromAdjs deps
+        revDepGraph = transpose depGraph
+        -- Those two graphs have only libraries in the cabal store, not
+        -- libraries that come with GHC.
     case command of
-      List -> putStr ((unlines . sortOn (map toLower) . map fst) graph)
-      ListTops -> putStr ((unlines . sortOn (map toLower)) indeps)
+      List -> putStr ((unlines . sortCI . vertices) depGraph)
+      ListTops -> putStr ((unlines . sortCI) indeps)
         where
-          indeps = (map fst . filter (null . snd) . graphRev) graph
-      ListDeps -> putStr (showGraph "->" sorted)
-        where
-          sorted = (map (\(p,ps) -> (p, sortOn (map toLower) ps)) .
-                    sortOn (map toLower . fst) .
-                    graphTrim
-                   )
-                   graph
-      ListRevDeps -> putStr (showGraph "<-" sorted)
-        where
-          sorted = (map (\(p,ps) -> (p, sortOn (map toLower) ps)) .
-                    sortOn (map toLower . fst) .
-                    graphRev
-                   )
-                   graph
-      GC -> case removalOrder graph pkgIDs of
+          indeps = (map fst . filter (null . snd) . toAdjLists) revDepGraph
+      ListDeps -> putStr (showGraph "->" depGraph)
+      ListRevDeps -> putStr (showGraph "<-" revDepGraph)
+      GC -> case removalOrder deps pkgIDs of
         NotFound ps -> do
             hPutStrLn stderr (unlines
               ("Error: These are not in the cabal store, \
@@ -46,7 +39,7 @@ main = do
       RM ->
         -- Not the perfect algorithm but it works for now. Shortcomings:
         -- Perhaps not an efficient algorithm?
-        case removalOrder graph keeps of
+        case removalOrder deps keeps of
           Remove ps -> do
               mapM_ (remove cfg commitment) ps
               mapM_ warnKept (pkgIDs \\ ps)
@@ -61,12 +54,12 @@ main = do
             error (unlines ("Should not happen, but these are \"not found\":" : ps))
         where
           keeps = knownPkgs \\ pkgIDs
-          knownPkgs = map fst graph
+          knownPkgs = map fst deps
           -- candidateRevDeps = filter (\(p, _) -> p `elem` pkgIDs) (graphRev graph)
 
 remove _cfg Dryrun p =
     putStrLn ("Would remove " ++ p)
-remove Config{..} Doit p = do
+remove Config{ghcpkg, cabalstore, cabaldb} Doit p = do
     putStrLn ("Removing " ++ p)
     callProcess ghcpkg args
     removeDirectoryRecursive (cabalstore ++ "/" ++ p)
@@ -76,10 +69,16 @@ remove Config{..} Doit p = do
             "unregister",
             p]
 
-showGraph arrow g = concatMap showNode g
+showGraph arrow = concatMap showNode .
+                  map (\(p,ps) -> (p, sortCI ps)) .
+                  sortCIOn fst .
+                  toAdjLists
   where
-    -- showNode (p, []) = p ++ " " ++ arrow ++ " ;\n"
     showNode (p, ps) = p ++ " " ++ arrow ++ "\n" ++
                        concatMap (\x -> indent ++ x ++ "\n") ps ++
                        indent ++ ";\n"
     indent = "    "
+
+-- case-insensitive sorts
+sortCI = sortOn (map toLower)
+sortCIOn f = sortOn (map toLower . f)

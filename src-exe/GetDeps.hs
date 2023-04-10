@@ -1,4 +1,4 @@
-{-# language RecordWildCards #-} -- Rationalization: Small module, few field names. :)
+{-# language NamedFieldPuns #-}
 
 -- | Read and construct the dependency graph of the cabal store.
 module GetDeps(getDepGraph, graphRev, graphTrim) where
@@ -18,7 +18,7 @@ import           Config
 -- The graph is in terms of [list of] adjacency lists: A tuple (x, [y,z]) means
 -- that x depends on y and z.
 getDepGraph :: Config -> IO [(String, [String])]
-getDepGraph Config{..} = do
+getDepGraph Config{ghcpkg, cabaldb} = do
     dump <- readProcess ghcpkg args ""
     case parse pkgGraph "ghc-pkg output" dump of
       Left e -> fail (show e)
