@@ -13,7 +13,7 @@ import Data.Tree
 import MonoGraph
 
 -- | Answer type of removeExcept below.
-data RemoveExcept p = NotFound [p]  -- ^ nodes not found 
+data RemoveExcept p = NotFound [p]  -- ^ nodes not found
                     | Remove [p]    -- ^ nodes in safe removal order
     deriving Show
 
