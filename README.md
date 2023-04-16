@@ -136,6 +136,9 @@ kept if it is needed by an unremoved package.  (And of course a package ID that
 doesn't exist cannot be removed either.)  A dry-run is done, i.e., just reports
 what would be removed; for actual removal, add `-y` or `--yes`.
 
+For kept packages, warnings are given to list the root causes: all top packages
+that transitively depend on the kept packages.
+
 Dry-run example:
 
 ```
@@ -156,9 +159,13 @@ Would remove scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f
 Warnings on stderr: The Unremoved and the non-existent:
 
 ```
-Warning: primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632 not removed: needed by other packages.
-Warning: foobar-1.1-deadbeef not removed: did not exist.
+Warning: primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632 not removed: needed by: attoparsec-0.14.1-8b967698b8ca9b4cfe0876733a65a24bb7481895dfa83030374e8eda687c259d
+Warning: foobar-1.1-deadbeef not removed: not in the cabal store.
 ```
+
+Note that primitive is kept because of this dependency chain:  
+attoparsec -> scientific -> primitive  
+and the warning reports only the tops (attoparsec).
 
 Removal example:
 
@@ -180,8 +187,8 @@ Removing scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd2
 Warnings on stderr:
 
 ```
-Warning: primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632 not removed: needed by other packages.
-Warning: foobar-1.1-deadbeef not removed: did not exist.
+Warning: primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632 not removed: needed by: attoparsec-0.14.1-8b967698b8ca9b4cfe0876733a65a24bb7481895dfa83030374e8eda687c259d
+Warning: foobar-1.1-deadbeef not removed: not in the cabal store.
 ```
 
 
