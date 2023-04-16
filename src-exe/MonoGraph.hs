@@ -190,12 +190,12 @@ deleteVertexSet s (Graph d) = Graph d'
     d' = fmap (Set.\\ s) (d `Map.withoutKeys` s)
 
 -- | Subgraph induced by the specified vertices, i.e., keep only those vertices
--- but as many edges as possible.
+-- but as many edges as possible.  No harm done if some were not in the graph.
 subgraph :: Ord v => [v] -> Graph v -> Graph v
 subgraph vs g = subsetgraph (Set.fromList vs) g
 
 -- | Subgraph induced by the specified vertex set, i.e., keep only those vertices
--- but as many edges as possible.
+-- but as many edges as possible.  No harm done if some were not in the graph.
 subsetgraph :: Ord v => Set v -> Graph v -> Graph v
 subsetgraph s (Graph d) = Graph d'
   where

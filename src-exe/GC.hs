@@ -1,19 +1,25 @@
+{-# language FlexibleContexts #-}
+{-# language NamedFieldPuns #-}
+
 -- | Some kind of garbage-collection algorithm: Given an acyclic dependency
 -- graph and which nodes the user wants to keep, compute a safe removal order of
 -- removable nodes.
 module GC where
 
-import Data.Foldable
-import Data.Graph
-import Data.Maybe
+import Control.Monad.State.Lazy
+import Data.Either (partitionEithers)
+import Data.Tree
 
-data Answer p = NotFound [p] | Remove [p]
+import MonoGraph
+
+-- | Answer type of removeExcept below.
+data RemoveExcept p = NotFound [p]  -- ^ nodes not found 
+                    | Remove [p]    -- ^ nodes in safe removal order
     deriving Show
 
--- | Compute a safe removal order of removable nodes.
+-- | Compute a safe removal order of nodes except the given keeps.
 --
--- 1st param: The acyclic dependency graph in terms of [list of] adjacency
--- lists.  E.g., a tuple (x, [y,z]) means that x depends on y and z.
+-- 1st param: The acyclic dependency graph.
 --
 -- 2nd param: Which nodes the user wants to keep. These and their transitive
 -- dependencies will not be in the safe removal order.
@@ -26,19 +32,63 @@ data Answer p = NotFound [p] | Remove [p]
 -- Otherwise, the answer is Remove with a safe removal order.  E.g., if x
 -- depends on y and z, then x is earlier in the list, y and z are later, i.e.,
 -- topological sort order.
-removalOrder :: Ord p => [(p, [p])] -> [p] -> Answer p
-removalOrder deps keeps
-  | null notfoundKeeps = Remove (map ((\(_,p,_) -> p) . nodeFromV) removes)
-  | otherwise = NotFound notfoundKeeps
+removeExceptSort :: Ord p => Graph p -> [p] -> RemoveExcept p
+removeExceptSort depGraph keeps
+  | null notFound = Remove removes
+  | otherwise = NotFound notFound
   where
-    (graph, nodeFromV, vFromKey) = graphFromEdges (map (\(p,ps) -> ((),p,ps)) deps)
-    -- checkedKeeps is a list like this, if keeps=[x,y]:
-    -- [(x, Just 5), (y, Nothing)]
-    -- It means that y is not in deps, x is vertex #5 in graph.
-    checkedKeeps = map (\p -> (p, vFromKey p)) keeps
-    notfoundKeeps = (map fst . filter (isNothing . snd)) checkedKeeps
-    moreKeeps = (concatMap toList . dfs graph . catMaybes . map snd) checkedKeeps
-    removes = filter (`notElem` moreKeeps) (topSort graph)
+    notFound = filter (not . (`isVertex` depGraph)) keeps
+    allKeeps = concatMap flatten (dfsFroms keeps depGraph)
+    removes = reverseFinishSort (deleteVertices allKeeps depGraph)
+
+-- | Answer type of removeOnly below.
+data RemoveOnly p =
+    RemoveOnly {oRemoves :: [p],       -- ^ safe removal order
+                oNeeds :: [(p, [p])],  -- ^ unremovables with root causes (ancestors)
+                oNotFound :: [p]       -- ^ nodes not found
+               }
+    deriving Show
+
+-- | Compute a safe removal order of the requested nodes, insofar as they exist
+-- and won't have unremoved ancestors.
+--
+-- Note that some requested nodes may be unremovable because they still have
+-- unremoved ancestors.  They are excluded from the removal order.
+--
+-- The answer consists of: removal order of removables; unremovables and their
+-- respective root causes (ancestors); nodes not found in the graph.
+removeOnlySort :: Ord p => Graph p -> [p] -> RemoveOnly p
+removeOnlySort depGraph ps = RemoveOnly{oRemoves, oNeeds, oNotFound}
+  where
+    oNotFound = filter (not . (`isVertex` depGraph)) ps
+    candidates = reverseFinishSort (subgraph ps depGraph)
+    ((needed, oRemoves), newRevDeps) =
+        runState (partitionEithers <$> mapM classify candidates) (transpose depGraph)
+    classify p = do
+        removable <- gets (null . adjSet' p)
+        if removable then do
+            modify' (deleteVertex p)
+            pure (Right p)
+          else pure (Left p)
+    -- Tricky: During classify, we can know whether a package is needed, but
+    -- we cannot be sure who will be root ancestors.  Example:
+    -- X -> Y -> Z.
+    -- User asks to remove X and Z, but not Y.
+    -- Subgraph of {X, Z} has no edge, topological sort can put them in
+    -- any order, it can be [Z, X].
+    -- During classify Z, we see X<-Y<-Z, but it is premature to conclude that X
+    -- is root ancestor.  (X will be removed later, the correct root will be Y,
+    -- this is knowable only after we have the final newRevDeps.)
+    oNeeds = [(p, bottomsFrom newRevDeps p) | p <- needed]
+
+-- | Childless descendents of a node.
+bottomsFrom :: Ord p => Graph p -> p -> [p]
+bottomsFrom g p = concatMap perTree (subForest (dfsFrom p g))
+  where
+    perTree Node{rootLabel, subForest}
+      | not (null subForest) = concatMap perTree subForest
+      | null (adjSet' rootLabel g) = [rootLabel]
+      | otherwise = []
 
 
 -- Some more kinds of requests and algorithms.

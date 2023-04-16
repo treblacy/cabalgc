@@ -28,7 +28,7 @@ main = do
           indeps = (map fst . filter (null . snd) . toAdjLists) revDepGraph
       ListDeps -> putStr (showGraph "->" depGraph)
       ListRevDeps -> putStr (showGraph "<-" revDepGraph)
-      GC -> case removalOrder deps pkgIDs of
+      GC -> case removeExceptSort depGraph pkgIDs of
         NotFound ps -> do
             hPutStrLn stderr (unlines
               ("Error: These are not in the cabal store, \
@@ -36,26 +36,16 @@ main = do
                \please check for typoes:" : ps))
             exitWith (ExitFailure 1)
         Remove ps -> mapM_ (remove cfg commitment) ps
-      RM ->
-        -- Not the perfect algorithm but it works for now. Shortcomings:
-        -- Perhaps not an efficient algorithm?
-        case removalOrder deps keeps of
-          Remove ps -> do
-              mapM_ (remove cfg commitment) ps
-              mapM_ warnKept (pkgIDs \\ ps)
-            where
-              warnKept p = hPutStrLn stderr
-                ("Warning: " ++ p ++ " not removed: " ++
-                 if p `elem` knownPkgs
-                 then "needed by other packages."
-                 else "did not exist.")
-          -- NotFound should not happen here.
-          NotFound ps ->
-            error (unlines ("Should not happen, but these are \"not found\":" : ps))
+      RM -> do
+          mapM_ (remove cfg commitment) oRemoves
+          mapM_ warnNeeded oNeeds
+          mapM_ warnNotFound oNotFound
         where
-          keeps = knownPkgs \\ pkgIDs
-          knownPkgs = map fst deps
-          -- candidateRevDeps = filter (\(p, _) -> p `elem` pkgIDs) (graphRev graph)
+          RemoveOnly{oRemoves, oNeeds, oNotFound} = removeOnlySort depGraph pkgIDs
+          warnNeeded (p, rs) = hPutStrLn stderr
+            ("Warning: " ++ p ++ " not removed: needed by: " ++ unwords rs)
+          warnNotFound p = hPutStrLn stderr
+            ("Warning: " ++ p ++ " not removed: not in the cabal store.")
 
 remove _cfg Dryrun p =
     putStrLn ("Would remove " ++ p)
