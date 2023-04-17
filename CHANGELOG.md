@@ -1,5 +1,14 @@
 # Revision history for cabalgc
 
+## 1.0.3.0 -- 2023-04-17
+
+* Add: Warnings from --remove/-x
+* Switch to my own graph-theory library.
+* Relax build dependencies.
+  In principle including GHC 9.6.
+  In practice cabal-install-parsers's constraints are blocking that,
+  but you can unblock with --allow-newer=base,transformers
+
 ## 1.0.2.0 -- 2023-01-05
 
 * Add: Option to print version number.
