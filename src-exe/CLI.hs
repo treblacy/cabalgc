@@ -3,6 +3,7 @@ module CLI where
 
 import Control.Monad
 import Data.List
+import Data.Maybe
 import Data.Version (showVersion)
 import Paths_cabalgc (version)
 import System.Console.GetOpt
@@ -13,6 +14,7 @@ import System.IO
 data Params = Params{
     ghcver :: Maybe String,        -- ^ optional GHC numeric version
     pkgIDs :: [String],            -- ^ packages specified by the user
+    printFullHash :: Bool,         -- ^ full hash when printing package IDs
     commitment :: Commitment,      -- ^ dry-run or do-it
     command :: Command             -- ^ chosen operation
     }
@@ -24,7 +26,9 @@ data Command = GC | RM | List | ListDeps | ListTops | ListRevDeps
 data Commitment = Dryrun | Doit
     deriving Show
 
-blankParams = Params{ghcver = Nothing, pkgIDs = [], commitment = Dryrun, command = GC}
+blankParams = Params{ghcver = Nothing, printFullHash = False, commitment = Dryrun,
+                     pkgIDs = [],
+                     command = GC}
 
 options :: [OptDescr (Params -> IO Params)]
 options =
@@ -49,6 +53,12 @@ options =
     , Option "t" ["tops"]
       (NoArg (\o -> pure o{command = ListTops}))
       "just list packages not depended on, remove nothing"
+    , Option "" ["fullhash"]
+      (OptArg (\m o -> do
+                    b <- parseBool (fromMaybe "y" m)
+                    pure o{printFullHash = b})
+              "y|n")
+      "full hashes when printing package IDs"
     , Option "x" ["remove"]
       (NoArg (\o -> pure o{command = RM}))
       "remove only specified packages (dry-run default applies)"
@@ -56,6 +66,10 @@ options =
       (NoArg (\o -> pure o{commitment = Doit}))
       "perform the removals (default is dry-run)"
     ]
+  where
+    parseBool s | s `elem` ["1", "Y", "y"] = pure True
+                | otherwise = pure False
+    -- This lives in IO for future printing error messages and exiting.
 
 -- | Call 'getArgs' and parse into 'Params'.
 --
