@@ -87,6 +87,33 @@ The output format tries to be nice to both humans and machines. For humans,
 there are indentations and almost-blank lines.  For machines, there are “`->`”
 and “`;`” separators.
 
+It is possible to focus on selected packages and transitive dependencies: Name
+the selected packages as arguments:
+
+```
+$ cabalgc --deps \
+>   scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9 \
+>   scientific-0.3.7.0-71a81872275dd1245b55f1720c97b61dbd8313241c663a9c37295e78ba23e760
+hashable-1.3.3.0-06faacb7b1e623eab0175fd0a560256155d4f1277f2fab474a5544596f28370a ->
+    ;
+hashable-1.3.4.1-87220b7404d7a82793f40abb4dd7d8ff0d0def24c7c96ff17fa4284821292074 ->
+    ;
+integer-logarithms-1.0.3.1-929e94691dec6feec9fc7092bda83c34e1302e44dccd015b0e9dfc10770dbd0c ->
+    ;
+primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632 ->
+    ;
+scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9 ->
+    hashable-1.3.3.0-06faacb7b1e623eab0175fd0a560256155d4f1277f2fab474a5544596f28370a
+    integer-logarithms-1.0.3.1-929e94691dec6feec9fc7092bda83c34e1302e44dccd015b0e9dfc10770dbd0c
+    primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632
+    ;
+scientific-0.3.7.0-71a81872275dd1245b55f1720c97b61dbd8313241c663a9c37295e78ba23e760 ->
+    hashable-1.3.4.1-87220b7404d7a82793f40abb4dd7d8ff0d0def24c7c96ff17fa4284821292074
+    integer-logarithms-1.0.3.1-929e94691dec6feec9fc7092bda83c34e1302e44dccd015b0e9dfc10770dbd0c
+    primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632
+    ;
+```
+
 `cabalgc --rdeps` lists [direct] reverse dependencies (but again confined to the
 cabal store):
 
@@ -124,6 +151,28 @@ splitmix-0.1.0.3-e01ea87704740bf1a26e8c25b66b8cd9e76e225b6d6dc0adc01c92cc9b8224b
 ```
 
 The output format is similar to `--deps` but with “`<-`” instead.
+
+It is possible to focus on selected packages and transitive reverse
+dependencies: Name the selected packages as arguments:
+
+```
+$ cabalgc --rdeps \
+>    hashable-1.3.3.0-06faacb7b1e623eab0175fd0a560256155d4f1277f2fab474a5544596f28370a \
+>    splitmix-0.1.0.3-e01ea87704740bf1a26e8c25b66b8cd9e76e225b6d6dc0adc01c92cc9b8224bd
+attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18 <-
+    ;
+hashable-1.3.3.0-06faacb7b1e623eab0175fd0a560256155d4f1277f2fab474a5544596f28370a <-
+    scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9
+    ;
+random-1.2.1-e2a470bddae1da56736c04a4f90f71d380a26095b22e0ef3e73f4aa440aab864 <-
+    ;
+scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9 <-
+    attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18
+    ;
+splitmix-0.1.0.3-e01ea87704740bf1a26e8c25b66b8cd9e76e225b6d6dc0adc01c92cc9b8224bd <-
+    random-1.2.1-e2a470bddae1da56736c04a4f90f71d380a26095b22e0ef3e73f4aa440aab864
+    ;
+```
 
 
 ## Removing
