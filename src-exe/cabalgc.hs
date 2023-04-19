@@ -1,5 +1,6 @@
 {-# language NamedFieldPuns #-}
 
+import Control.Monad (when)
 import Data.Char
 import Data.List hiding (transpose)
 import System.Directory
@@ -26,8 +27,8 @@ main = do
       ListTops -> putStr ((unlines . sortCI) indeps)
         where
           indeps = (map fst . filter (null . snd) . toAdjLists) revDepGraph
-      ListDeps -> putStr (showGraph "->" depGraph)
-      ListRevDeps -> putStr (showGraph "<-" revDepGraph)
+      ListDeps -> listDeps "->" depGraph pkgIDs
+      ListRevDeps -> listDeps "<-" revDepGraph pkgIDs
       GC -> case removeExceptSort depGraph pkgIDs of
         NotFound ps -> do
             hPutStrLn stderr (unlines
@@ -58,6 +59,20 @@ remove Config{ghcpkg, cabalstore, cabaldb} Doit p = do
             "--ipid",
             "unregister",
             p]
+
+listDeps arrow g ps = case depRestrict ps g of
+    (notFound, g') -> do
+        putStr (showGraph arrow g')
+        mapM_ warnNotFound notFound
+  where
+    warnNotFound p = hPutStrLn stderr
+      ("Warning: " ++ p ++ " omitted: not in the cabal store.")
+
+depRestrict [] g = ([], g)
+depRestrict ps g = (notFound, g')
+  where
+    notFound = [v | v <- ps, not (isVertex v g)]
+    g' = subgraph (concatMap flatten (dfsFroms ps g)) g
 
 showGraph arrow = concatMap showNode .
                   map (\(p,ps) -> (p, sortCI ps)) .
