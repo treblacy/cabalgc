@@ -1,5 +1,14 @@
 # Revision history for cabalgc
 
+## 1.0.4.0 -- 2023-04-19
+
+* Add: --deps and --rdeps can focus on user-selected packages:
+
+  If at least one pkgID on command line: Selected packages and transitive
+  dependencies.  (Transitive reverse dependencies for --rdeps.)
+
+  If no pkgID on command line: All (cabal-store) packages as before.
+
 ## 1.0.3.0 -- 2023-04-17
 
 * Add: Warnings from --remove/-x
