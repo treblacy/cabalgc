@@ -8,15 +8,16 @@ Here is the help message:
 Usage: cabalgc [OPTION...] PKGID...
 Remove library packages except those you specify and transitive dependencies.
 BUT: Dry-run unless you say -y or --yes .
-  -h          --help         this help message
-  -V          --version      print version number
-  -g VERSION  --ghc=VERSION  GHC version, e.g., 8.10 or 8.10.7
-  -l          --list         just list packages, remove nothing
-  -d          --deps         just list dependencies, remove nothing
-  -r          --rdeps        just list reverse dependencies, remove nothing
-  -t          --tops         just list packages not depended on, remove nothing
-  -x          --remove       remove only specified packages (dry-run default applies)
-  -y          --yes          perform the removals (default is dry-run)
+  -h          --help            this help message
+  -V          --version         print version number
+  -g VERSION  --ghc=VERSION     GHC version, e.g., 8.10 or 8.10.7
+  -l          --list            just list packages, remove nothing
+  -d          --deps            just list dependencies, remove nothing
+  -r          --rdeps           just list reverse dependencies, remove nothing
+  -t          --tops            just list packages not depended on, remove nothing
+              --fullhash[=y|n]  full hashes when printing package IDs
+  -x          --remove          remove only specified packages (dry-run default applies)
+  -y          --yes             perform the removals (default is dry-run)
 ```
 
 ## Listing packages, dependencies, etc.
@@ -25,61 +26,55 @@ BUT: Dry-run unless you say -y or --yes .
 
 ```
 $ cabalgc --list
-attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18
-attoparsec-0.14.1-8b967698b8ca9b4cfe0876733a65a24bb7481895dfa83030374e8eda687c259d
-hashable-1.3.3.0-06faacb7b1e623eab0175fd0a560256155d4f1277f2fab474a5544596f28370a
-hashable-1.3.4.1-87220b7404d7a82793f40abb4dd7d8ff0d0def24c7c96ff17fa4284821292074
-integer-logarithms-1.0.3.1-929e94691dec6feec9fc7092bda83c34e1302e44dccd015b0e9dfc10770dbd0c
-primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632
-random-1.2.1-e2a470bddae1da56736c04a4f90f71d380a26095b22e0ef3e73f4aa440aab864
-scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9
-scientific-0.3.7.0-71a81872275dd1245b55f1720c97b61dbd8313241c663a9c37295e78ba23e760
-splitmix-0.1.0.3-e01ea87704740bf1a26e8c25b66b8cd9e76e225b6d6dc0adc01c92cc9b8224bd
+base-orphans-0.9.0-97381d0
+data-array-byte-0.1.0.1-faf1e8a
+hmatrix-0.20.2-56cbf16
+network-3.1.4.0-896c3fb
+primitive-0.8.0.0-0bc4833
+random-1.2.1.1-18ed557
+semigroups-0.20-74fef4d
+split-0.2.3.5-402d901
+splitmix-0.1.0.4-64be883
+storable-complex-0.2.3.0-0b89ddc
+vector-0.13.0.0-16ca557
+vector-stream-0.1.0.0-2fa3fc9
 ```
+
+By default, only 7 digits of the hashes are shown.  If you want to see full
+hashes, add the `--fullhash` option.  Note that you will not need the full hash
+for the other functions of this program—it performs completion for prefixes of
+package IDs you give.
 
 `cabalgc --tops` lists packages at “the top of the food chain”, i.e., the rest
 of the cabal store doesn't depend on them:
 
 ```
 $ cabalgc --tops
-attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18
-attoparsec-0.14.1-8b967698b8ca9b4cfe0876733a65a24bb7481895dfa83030374e8eda687c259d
-random-1.2.1-e2a470bddae1da56736c04a4f90f71d380a26095b22e0ef3e73f4aa440aab864
+hmatrix-0.20.2-56cbf16
+network-3.1.4.0-896c3fb
 ```
 
-`cabalgc --deps` lists [direct] dependencies (but confined to what's in the
-cabal store, e.g., base is not listed as a dependency):
+`cabalgc --deps PKGID...` lists the dependency forest that starts from the
+specified packages (but confined to the cabal store, e.g., base is not listed as
+a dependency).  If no package is specified, the whole store is listed.
 
 ```
-$ cabalgc --deps
-attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18 ->
-    scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9
+$ cabalgc --deps vector-0 random
+data-array-byte-0.1.0.1-faf1e8a ->
     ;
-attoparsec-0.14.1-8b967698b8ca9b4cfe0876733a65a24bb7481895dfa83030374e8eda687c259d ->
-    scientific-0.3.7.0-71a81872275dd1245b55f1720c97b61dbd8313241c663a9c37295e78ba23e760
+primitive-0.8.0.0-0bc4833 ->
+    data-array-byte-0.1.0.1-faf1e8a
     ;
-hashable-1.3.3.0-06faacb7b1e623eab0175fd0a560256155d4f1277f2fab474a5544596f28370a ->
+random-1.2.1.1-18ed557 ->
+    splitmix-0.1.0.4-64be883
     ;
-hashable-1.3.4.1-87220b7404d7a82793f40abb4dd7d8ff0d0def24c7c96ff17fa4284821292074 ->
+splitmix-0.1.0.4-64be883 ->
     ;
-integer-logarithms-1.0.3.1-929e94691dec6feec9fc7092bda83c34e1302e44dccd015b0e9dfc10770dbd0c ->
+vector-0.13.0.0-16ca557 ->
+    primitive-0.8.0.0-0bc4833
+    vector-stream-0.1.0.0-2fa3fc9
     ;
-primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632 ->
-    ;
-random-1.2.1-e2a470bddae1da56736c04a4f90f71d380a26095b22e0ef3e73f4aa440aab864 ->
-    splitmix-0.1.0.3-e01ea87704740bf1a26e8c25b66b8cd9e76e225b6d6dc0adc01c92cc9b8224bd
-    ;
-scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9 ->
-    hashable-1.3.3.0-06faacb7b1e623eab0175fd0a560256155d4f1277f2fab474a5544596f28370a
-    integer-logarithms-1.0.3.1-929e94691dec6feec9fc7092bda83c34e1302e44dccd015b0e9dfc10770dbd0c
-    primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632
-    ;
-scientific-0.3.7.0-71a81872275dd1245b55f1720c97b61dbd8313241c663a9c37295e78ba23e760 ->
-    hashable-1.3.4.1-87220b7404d7a82793f40abb4dd7d8ff0d0def24c7c96ff17fa4284821292074
-    integer-logarithms-1.0.3.1-929e94691dec6feec9fc7092bda83c34e1302e44dccd015b0e9dfc10770dbd0c
-    primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632
-    ;
-splitmix-0.1.0.3-e01ea87704740bf1a26e8c25b66b8cd9e76e225b6d6dc0adc01c92cc9b8224bd ->
+vector-stream-0.1.0.0-2fa3fc9 ->
     ;
 ```
 
@@ -87,90 +82,24 @@ The output format tries to be nice to both humans and machines. For humans,
 there are indentations and almost-blank lines.  For machines, there are “`->`”
 and “`;`” separators.
 
-It is possible to focus on selected packages and transitive dependencies: Name
-the selected packages as arguments:
-
-```
-$ cabalgc --deps \
->   scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9 \
->   scientific-0.3.7.0-71a81872275dd1245b55f1720c97b61dbd8313241c663a9c37295e78ba23e760
-hashable-1.3.3.0-06faacb7b1e623eab0175fd0a560256155d4f1277f2fab474a5544596f28370a ->
-    ;
-hashable-1.3.4.1-87220b7404d7a82793f40abb4dd7d8ff0d0def24c7c96ff17fa4284821292074 ->
-    ;
-integer-logarithms-1.0.3.1-929e94691dec6feec9fc7092bda83c34e1302e44dccd015b0e9dfc10770dbd0c ->
-    ;
-primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632 ->
-    ;
-scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9 ->
-    hashable-1.3.3.0-06faacb7b1e623eab0175fd0a560256155d4f1277f2fab474a5544596f28370a
-    integer-logarithms-1.0.3.1-929e94691dec6feec9fc7092bda83c34e1302e44dccd015b0e9dfc10770dbd0c
-    primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632
-    ;
-scientific-0.3.7.0-71a81872275dd1245b55f1720c97b61dbd8313241c663a9c37295e78ba23e760 ->
-    hashable-1.3.4.1-87220b7404d7a82793f40abb4dd7d8ff0d0def24c7c96ff17fa4284821292074
-    integer-logarithms-1.0.3.1-929e94691dec6feec9fc7092bda83c34e1302e44dccd015b0e9dfc10770dbd0c
-    primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632
-    ;
-```
-
-`cabalgc --rdeps` lists [direct] reverse dependencies (but again confined to the
-cabal store):
-
-```
-$ cabalgc --rdeps
-attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18 <-
-    ;
-attoparsec-0.14.1-8b967698b8ca9b4cfe0876733a65a24bb7481895dfa83030374e8eda687c259d <-
-    ;
-hashable-1.3.3.0-06faacb7b1e623eab0175fd0a560256155d4f1277f2fab474a5544596f28370a <-
-    scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9
-    ;
-hashable-1.3.4.1-87220b7404d7a82793f40abb4dd7d8ff0d0def24c7c96ff17fa4284821292074 <-
-    scientific-0.3.7.0-71a81872275dd1245b55f1720c97b61dbd8313241c663a9c37295e78ba23e760
-    ;
-integer-logarithms-1.0.3.1-929e94691dec6feec9fc7092bda83c34e1302e44dccd015b0e9dfc10770dbd0c <-
-    scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9
-    scientific-0.3.7.0-71a81872275dd1245b55f1720c97b61dbd8313241c663a9c37295e78ba23e760
-    ;
-primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632 <-
-    scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9
-    scientific-0.3.7.0-71a81872275dd1245b55f1720c97b61dbd8313241c663a9c37295e78ba23e760
-    ;
-random-1.2.1-e2a470bddae1da56736c04a4f90f71d380a26095b22e0ef3e73f4aa440aab864 <-
-    ;
-scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9 <-
-    attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18
-    ;
-scientific-0.3.7.0-71a81872275dd1245b55f1720c97b61dbd8313241c663a9c37295e78ba23e760 <-
-    attoparsec-0.14.1-8b967698b8ca9b4cfe0876733a65a24bb7481895dfa83030374e8eda687c259d
-    ;
-splitmix-0.1.0.3-e01ea87704740bf1a26e8c25b66b8cd9e76e225b6d6dc0adc01c92cc9b8224bd <-
-    random-1.2.1-e2a470bddae1da56736c04a4f90f71d380a26095b22e0ef3e73f4aa440aab864
-    ;
-```
+`cabalgc --rdeps PKGID...` lists the reverse dependency forest that starts from
+the specified packages (but again confined to the cabal store).  If no package
+is specified, the whole store is listed.
 
 The output format is similar to `--deps` but with “`<-`” instead.
 
-It is possible to focus on selected packages and transitive reverse
-dependencies: Name the selected packages as arguments:
-
 ```
-$ cabalgc --rdeps \
->    hashable-1.3.3.0-06faacb7b1e623eab0175fd0a560256155d4f1277f2fab474a5544596f28370a \
->    splitmix-0.1.0.3-e01ea87704740bf1a26e8c25b66b8cd9e76e225b6d6dc0adc01c92cc9b8224bd
-attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18 <-
+$ cabalgc --rdeps split-0 splitmix
+hmatrix-0.20.2-56cbf16 <-
     ;
-hashable-1.3.3.0-06faacb7b1e623eab0175fd0a560256155d4f1277f2fab474a5544596f28370a <-
-    scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9
+random-1.2.1.1-18ed557 <-
+    hmatrix-0.20.2-56cbf16
     ;
-random-1.2.1-e2a470bddae1da56736c04a4f90f71d380a26095b22e0ef3e73f4aa440aab864 <-
+split-0.2.3.5-402d901 <-
+    hmatrix-0.20.2-56cbf16
     ;
-scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9 <-
-    attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18
-    ;
-splitmix-0.1.0.3-e01ea87704740bf1a26e8c25b66b8cd9e76e225b6d6dc0adc01c92cc9b8224bd <-
-    random-1.2.1-e2a470bddae1da56736c04a4f90f71d380a26095b22e0ef3e73f4aa440aab864
+splitmix-0.1.0.4-64be883 <-
+    random-1.2.1.1-18ed557
     ;
 ```
 
@@ -186,58 +115,45 @@ doesn't exist cannot be removed either.)  A dry-run is done, i.e., just reports
 what would be removed; for actual removal, add `-y` or `--yes`.
 
 For kept packages, warnings are given to list the root causes: all top packages
-that transitively depend on the kept packages.
+(only—for brevity) that transitively depend on the kept packages.  (To see all
+intermediate packages, you can use `cabalgc --rdeps PKGID...`.)
 
 Dry-run example:
 
 ```
-$ cabalgc --remove \
->   scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9 \
->   attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18 \
->   primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632 \
->   foobar-1.1-deadbeef
+$ cabalgc --remove network splitmix foobar
 ```
 
 Output on stdout: What would be removed:
 
 ```
-Would remove attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18
-Would remove scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9
+Would remove network-3.1.4.0-896c3fb
 ```
 
 Warnings on stderr: The Unremoved and the non-existent:
 
 ```
-Warning: primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632 not removed: needed by: attoparsec-0.14.1-8b967698b8ca9b4cfe0876733a65a24bb7481895dfa83030374e8eda687c259d
-Warning: foobar-1.1-deadbeef not removed: not in the cabal store.
+Warning: splitmix-0.1.0.4-64be883 not removed: needed by: hmatrix-0.20.2-56cbf16
+Warning: foobar not removed: not in the cabal store.
 ```
-
-Note that primitive is kept because of this dependency chain:  
-attoparsec -> scientific -> primitive  
-and the warning reports only the tops (attoparsec).
 
 Removal example:
 
 ```
-$ cabalgc --remove --yes \
->   scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9 \
->   attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18 \
->   primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632 \
->   foobar-1.1-deadbeef
+$ cabalgc --remove --yes network splitmix foobar
 ```
 
 Output on stdout:
 
 ```
-Removing attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18
-Removing scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9
+Removing network-3.1.4.0-896c3fb
 ```
 
 Warnings on stderr:
 
 ```
-Warning: primitive-0.7.2.0-88110134b23652b88f09a13c0f01344f82c38fa0b35c11be01aa12eb96139632 not removed: needed by: attoparsec-0.14.1-8b967698b8ca9b4cfe0876733a65a24bb7481895dfa83030374e8eda687c259d
-Warning: foobar-1.1-deadbeef not removed: not in the cabal store.
+Warning: splitmix-0.1.0.4-64be883 not removed: needed by: hmatrix-0.20.2-56cbf16
+Warning: foobar not removed: not in the cabal store.
 ```
 
 
@@ -251,30 +167,28 @@ the rest.
 This program dry-runs by default, i.e., just reports what would be removed; for
 actual removal, add `-y` or `--yes`.
 
-Example: I have two builds of attoparsec-0.14.1 (and most of its transitive
-dependencies) because one was built upon hashable-1.3.3.0 and the other was
-built later upon hashable-1.3.4.1.
-
-I want to keep random and the newer attoparsec build.  Here is a dry-run:
+Example: I want to keep random and vector.  Here is a dry-run:
 
 ```
-$ cabalgc \
->   attoparsec-0.14.1-8b967698b8ca9b4cfe0876733a65a24bb7481895dfa83030374e8eda687c259d \
->   random-1.2.1-e2a470bddae1da56736c04a4f90f71d380a26095b22e0ef3e73f4aa440aab864
-Would remove attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18
-Would remove scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9
-Would remove hashable-1.3.3.0-06faacb7b1e623eab0175fd0a560256155d4f1277f2fab474a5544596f28370a
+$ cabalgc random vector-0
+Would remove network-3.1.4.0-896c3fb
+Would remove hmatrix-0.20.2-56cbf16
+Would remove storable-complex-0.2.3.0-0b89ddc
+Would remove split-0.2.3.5-402d901
+Would remove semigroups-0.20-74fef4d
+Would remove base-orphans-0.9.0-97381d0
 ```
 
 To actually remove, add -y or --yes:
 
 ```
-$ cabalgc --yes \
->   attoparsec-0.14.1-8b967698b8ca9b4cfe0876733a65a24bb7481895dfa83030374e8eda687c259d \
->   random-1.2.1-e2a470bddae1da56736c04a4f90f71d380a26095b22e0ef3e73f4aa440aab864
-Removing attoparsec-0.14.1-096bc01737db3644622b4f9b5113275dd490141a347b670fda6576d3b31fad18
-Removing scientific-0.3.7.0-673ffad7b24354b484b4c1b2d89fa439e2b801d1766a523f1cd214e672e234f9
-Removing hashable-1.3.3.0-06faacb7b1e623eab0175fd0a560256155d4f1277f2fab474a5544596f28370a
+$ cabalgc --yes random vector-0
+Removing network-3.1.4.0-896c3fb
+Removing hmatrix-0.20.2-56cbf16
+Removing storable-complex-0.2.3.0-0b89ddc
+Removing split-0.2.3.5-402d901
+Removing semigroups-0.20-74fef4d
+Removing base-orphans-0.9.0-97381d0
 ```
 
 The removal order fulfills the safety constraint of `ghc-pkg unregister` (and common sense)
