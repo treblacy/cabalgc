@@ -1,5 +1,11 @@
 # Revision history for cabalgc
 
+## 1.1.0.0 -- 2023-09-08
+
+* Package ID shortening: When outputting, hashes are truncated (can be
+  overridden by an option). When inputting, only unambiguous prefixes are
+  required; completion is performed.
+
 ## 1.0.4.0 -- 2023-04-19
 
 * Add: --deps and --rdeps can focus on user-selected packages:
